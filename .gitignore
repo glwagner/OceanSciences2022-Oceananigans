@@ -25,3 +25,5 @@ Manifest.toml
 
 *.mp4
 *.jld2
+*.swp
+*.DS_Store
