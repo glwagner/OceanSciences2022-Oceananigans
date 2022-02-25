@@ -61,7 +61,7 @@ cᵢ(x, y, z) = exp(-y^2 / 2δc^2) * exp(-(z + Lz/4)^2 / 2δz^2)
 
 set!(model, b=bᵢ, c=cᵢ)
 
-simulation = Simulation(model, Δt=10minutes, stop_time=30days)
+simulation = Simulation(model, Δt=10minutes, stop_time=60days)
 
 wizard = TimeStepWizard(cfl=0.2, max_change=1.1, max_Δt=simulation.Δt)
 simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(1))
@@ -117,15 +117,18 @@ cⁿ = @lift c[$n]
 
 hmζ = heatmap!(axζ, xζ, yζ, ζⁿ, colormap=:redblue, colorrange=(-maxζ, maxζ))
 hmb = heatmap!(axb, xc, yc, bⁿ, colormap=:thermal, colorrange=(minb, maxb))
-hmc = heatmap!(axc, xc, yc, cⁿ, colormap=:deep, colorrange=(0, 0.1))
+hmc = heatmap!(axc, xc, yc, cⁿ, colormap=:deep, colorrange=(0, 0.3))
 
 Colorbar(fig[2, 1], hmζ, vertical=false, flipaxis=true, label="Vertical vorticity (s⁻¹)")
 Colorbar(fig[2, 2], hmb, vertical=false, flipaxis=true, label="Buoyancy (m s⁻²)")
 Colorbar(fig[2, 3], hmc, vertical=false, flipaxis=true, label="Tracer concentration")
 
+title = @lift "Baroclinic adjustment at t = " * prettytime(t[$n])
+Label(fig[0, :], title)
+
 display(fig)
 
-#record(fig, "beta_plane_baroclinic_adjustment.mp4", 1:Nt, framerate=12) do nn
-#    @info "Rendering frame $nn of $Nt...
-#    n[] = nn
-#end
+# record(fig, "beta_plane_baroclinic_adjustment.mp4", 1:Nt, framerate=12) do nn
+#     @info "Rendering frame $nn of $Nt..."
+#     n[] = nn
+# end
