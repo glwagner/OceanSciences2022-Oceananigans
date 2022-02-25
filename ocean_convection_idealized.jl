@@ -3,17 +3,18 @@ using Oceananigans.Units
 using GLMakie
 using Printf
 
-grid = RectilinearGrid(size=(64, 64), extent=(64, 64), halo=(3, 3), topology=(Periodic, Flat, Bounded))
-buoyancy_bcs = FieldBoundaryConditions(top = FluxBoundaryCondition(1e-8))
+grid = RectilinearGrid(size=(64, 64), x=(0, 128), z=(-64, 0), halo=(3, 3),
+                       topology=(Periodic, Flat, Bounded))
 
-model = NonhydrostaticModel(grid = grid, 
+boundary_conditions = (; b = FieldBoundaryConditions(top = FluxBoundaryCondition(1e-8)))
+closure = ScalarDiffusivity(ν=1e-4, κ=1e-4)
+coriolis = FPlane(f=1e-4)
+
+model = NonhydrostaticModel(; grid, closure, coriolis, boundary_conditions,
                             advection = UpwindBiasedFifthOrder(),
                             timestepper = :RungeKutta3,
-                            closure = ScalarDiffusivity(ν=1e-4, κ=1e-4),
-                            coriolis = FPlane(f=1e-4),
                             tracers = :b,
-                            buoyancy = BuoyancyTracer(),
-                            boundary_conditions = (; b=buoyancy_bcs))
+                            buoyancy = BuoyancyTracer())
 
 bᵢ(x, y, z) = 1e-5 * z
 ϵ(x, y, z) = 1e-6 * randn() # noise
