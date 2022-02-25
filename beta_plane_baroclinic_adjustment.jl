@@ -20,8 +20,11 @@ const Lz = grid.Lz
 # matrix-based Poisson solver instead of the FFT-based solver.
 
 const width = 50kilometers
-bump(x, y) = - Lz * (1 - 0.5 * exp(-(x^2 + y^2) / 2width^2))
-# grid = ImmersedBoundaryGrid(grid, GridFittedBottom(bump))
+@inline bump(x, y) = - Lz * (1 - 0.5 * exp(-(x^2 + y^2) / 2width^2))
+grid = ImmersedBoundaryGrid(grid, GridFittedBottom(bump))
+free_surface = ImplicitFreeSurface(solver_method=:HeptadiagonalIterativeSolver)
+
+#free_surface = ImplicitFreeSurface()
 
 # Physics
 
@@ -32,14 +35,13 @@ bump(x, y) = - Lz * (1 - 0.5 * exp(-(x^2 + y^2) / 2width^2))
 diffusive_closure = VerticalScalarDiffusivity(VerticallyImplicitTimeDiscretization(), ν=κz, κ=κz)
 horizontal_closure = HorizontalScalarBiharmonicDiffusivity(ν=κ₄h, κ=κ₄h)
 
-model = HydrostaticFreeSurfaceModel(grid = grid,
+model = HydrostaticFreeSurfaceModel(; grid, free_surface,
                                     coriolis = BetaPlane(latitude = -45),
                                     buoyancy = BuoyancyTracer(),
                                     closure = (diffusive_closure, horizontal_closure),
                                     tracers = (:b, :c),
                                     momentum_advection = WENO5(),
-                                    tracer_advection = WENO5(),
-                                    free_surface = ImplicitFreeSurface())
+                                    tracer_advection = WENO5())
 
 # Initial condition: a baroclinically unstable situation!
 ramp(y, δy) = min(max(0, y/δy + 1/2), 1)
