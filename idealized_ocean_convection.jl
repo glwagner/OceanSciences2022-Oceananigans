@@ -3,7 +3,6 @@ using Oceananigans.Units
 using GLMakie
 using Printf
 
-#=
 grid = RectilinearGrid(size=(64, 64), x=(0, 128), z=(-64, 0), halo=(3, 3),
                        topology=(Periodic, Flat, Bounded))
 
@@ -43,7 +42,6 @@ simulation.output_writers[:fields] = JLD2OutputWriter(model, (; e, w, ξ, b = mo
                                                       force = true)
 
 run!(simulation)
-=#
 
 # Visualization
 
