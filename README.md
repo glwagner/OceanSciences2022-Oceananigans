@@ -1,4 +1,4 @@
-# An Oceananigans "town hall" at AGU Ocean Sciences 2022
+# Oceananigans "town hall" at Ocean Sciences 2022
 
 * [Google slides](https://docs.google.com/presentation/d/1BYbQsdTkZbJ8CacpTsZzBtI3nXGGGy8LEsciJgXZpM0/edit?usp=sharing)
 * [Oceananigans.jl on github](https://github.com/CliMA/Oceananigans.jl)
