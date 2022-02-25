@@ -12,7 +12,7 @@ grid = RectilinearGrid(size = (60, 60, 1),
 
 # Specify coriolis, viscosity / turbulence closure, and boundary condition
 coriolis = BetaPlane(f₀=1e-4, β=1e-11)
-closure = ScalarDiffusivity(ν=100, isotropy=Horizontal())
+closure = ScalarDiffusivity(ν=400, isotropy=Horizontal())
 
 no_slip = ValueBoundaryCondition(0)
 wind_stress(x, y, t) = - 1e-4 * cos(2π * x / 1200kilometers)
