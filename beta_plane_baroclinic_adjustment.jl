@@ -1,12 +1,12 @@
 using Oceananigans
 using Oceananigans.Units
 using Oceananigans.ImmersedBoundaries: ImmersedBoundaryGrid, GridFittedBottom
-using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization
 using Printf
 using GLMakie
 using JLD2
 
-grid = RectilinearGrid(topology = (Periodic, Bounded, Bounded), 
+grid = RectilinearGrid(GPU(),
+                       topology = (Periodic, Bounded, Bounded), 
                        size = (128, 128, 8),
                        x = (-500kilometers, 500kilometers),
                        y = (-500kilometers, 500kilometers),
@@ -14,7 +14,6 @@ grid = RectilinearGrid(topology = (Periodic, Bounded, Bounded),
                        halo = (3, 3, 3))
 
 const Lz = grid.Lz
-
 
 # Uncomment to put a bump in the grid:
 # This will slow down the simulation because we will use a
@@ -62,10 +61,10 @@ cᵢ(x, y, z) = exp(-y^2 / 2δc^2) * exp(-(z + Lz/4)^2 / 2δz^2)
 
 set!(model, b=bᵢ, c=cᵢ)
 
-simulation = Simulation(model, Δt=20minutes, stop_time=30days)
+simulation = Simulation(model, Δt=10minutes, stop_time=30days)
 
 wizard = TimeStepWizard(cfl=0.2, max_change=1.1, max_Δt=simulation.Δt)
-simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(1))
+simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
 
 print_progress(sim) =
     @printf("Iter: %d, time: %s, wall time: %s, max|u|: %6.3e, m s⁻¹, next Δt: %s\n",
@@ -96,7 +95,7 @@ close(file)
 
 Nt = length(t)
 
-fig = Figure()
+fig = Figure(resolution=(1800, 600))
 
 axζ = Axis(fig[1, 1])
 axb = Axis(fig[1, 2])
@@ -116,9 +115,13 @@ hmζ = heatmap!(axζ, xζ, yζ, ζⁿ)
 hmb = heatmap!(axb, xc, yc, bⁿ)
 hmc = heatmap!(axc, xc, yc, cⁿ)
 
-# Colorbar(fig[2, 1], xζ, yζ, hmζ, horizontal=true)
-# Colorbar(fig[2, 2], xc, yc, hmb, horizontal=true)
-# Colorbar(fig[2, 3], xc, yc, hmc, horizontal=true)
+Colorbar(fig[2, 1], hmζ, vertical=false, flipaxis=true, label="Vertical vorticity (s⁻¹)")
+Colorbar(fig[2, 2], hmb, vertical=false, flipaxis=true, label="Buoyancy (m s⁻²)")
+Colorbar(fig[2, 3], hmc, vertical=false, flipaxis=true, label="Tracer concentration")
 
 display(fig)
 
+#record(fig, "beta_plane_baroclinic_adjustment.mp4", 1:Nt, framerate=12) do nn
+#    @info "Rendering frame $nn of $Nt...
+#    n[] = nn
+#end
