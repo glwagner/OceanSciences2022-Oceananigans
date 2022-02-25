@@ -5,12 +5,12 @@ using Printf
 using GLMakie
 using JLD2
 
-grid = RectilinearGrid(GPU(),
+grid = RectilinearGrid(CPU(),
                        topology = (Periodic, Bounded, Bounded), 
-                       size = (256, 256, 16),
+                       size = (128, 128, 16),
                        x = (-500kilometers, 500kilometers),
                        y = (-500kilometers, 500kilometers),
-                       z = (-1kilometers, 0),
+                       z = (-4kilometers, 0),
                        halo = (3, 3, 3))
 
 const Lz = grid.Lz
@@ -26,7 +26,7 @@ bump(x, y) = - Lz * (1 - 0.5 * exp(-(x^2 + y^2) / 2width^2))
 # Physics
 
 Δx = grid.Lx / grid.Nx
-κ₄h = Δx^4 / 12hours
+κ₄h = Δx^4 / 1day
 κz = 1e-2
 
 diffusive_closure = VerticalScalarDiffusivity(VerticallyImplicitTimeDiscretization(), ν=κz, κ=κz)
@@ -49,7 +49,7 @@ N² = 4e-6 # [s⁻²] buoyancy frequency / stratification
 M² = 8e-8 # [s⁻²] horizontal buoyancy gradient
 
 δy = 50kilometers
-δz = 100
+δz = 400
 Lz = grid.Lz
 
 δc = 2δy
@@ -61,10 +61,10 @@ cᵢ(x, y, z) = exp(-y^2 / 2δc^2) * exp(-(z + Lz/4)^2 / 2δz^2)
 
 set!(model, b=bᵢ, c=cᵢ)
 
-simulation = Simulation(model, Δt=10minutes, stop_time=2days)
+simulation = Simulation(model, Δt=10minutes, stop_time=30days)
 
 wizard = TimeStepWizard(cfl=0.2, max_change=1.1, max_Δt=simulation.Δt)
-simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
+simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(1))
 
 print_progress(sim) =
     @printf("Iter: %d, time: %s, wall time: %s, max|u|: %6.3e, m s⁻¹, next Δt: %s\n",
