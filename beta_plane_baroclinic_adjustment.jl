@@ -7,7 +7,7 @@ using JLD2
 
 grid = RectilinearGrid(GPU(),
                        topology = (Periodic, Bounded, Bounded), 
-                       size = (128, 128, 8),
+                       size = (256, 256, 16),
                        x = (-500kilometers, 500kilometers),
                        y = (-500kilometers, 500kilometers),
                        z = (-1kilometers, 0),
@@ -20,7 +20,7 @@ const Lz = grid.Lz
 # matrix-based Poisson solver instead of the FFT-based solver.
 
 const width = 50kilometers
-bump(x, y) = - Lz * (1 - 0.5 * exp(-x^2 / 2width^2))
+bump(x, y) = - Lz * (1 - 0.5 * exp(-(x^2 + y^2) / 2width^2))
 # grid = ImmersedBoundaryGrid(grid, GridFittedBottom(bump))
 
 # Physics
@@ -61,7 +61,7 @@ cᵢ(x, y, z) = exp(-y^2 / 2δc^2) * exp(-(z + Lz/4)^2 / 2δz^2)
 
 set!(model, b=bᵢ, c=cᵢ)
 
-simulation = Simulation(model, Δt=10minutes, stop_time=30days)
+simulation = Simulation(model, Δt=10minutes, stop_time=2days)
 
 wizard = TimeStepWizard(cfl=0.2, max_change=1.1, max_Δt=simulation.Δt)
 simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
@@ -93,6 +93,10 @@ c = [file["timeseries/c/$i"][:, :, 1] for i in iterations]
 t = [file["timeseries/t/$i"] for i in iterations]
 close(file)
 
+maxζ = maximum(maximum(abs, ζi) for ζi in ζ)
+maxb = maximum(maximum(bi) for bi in b)
+minb = minimum(minimum(bi) for bi in b)
+
 Nt = length(t)
 
 fig = Figure(resolution=(1800, 600))
@@ -101,7 +105,7 @@ axζ = Axis(fig[1, 1])
 axb = Axis(fig[1, 2])
 axc = Axis(fig[1, 3])
 
-slider = Slider(fig[2, :], range=1:Nt, startvalue=1)
+slider = Slider(fig[3, :], range=1:Nt, startvalue=Nt)
 n = slider.value
 
 xζ, yζ, zζ = 1e3 .* nodes((Face, Face, Center), grid)
@@ -111,9 +115,9 @@ xc, yc, zc = 1e3 .* nodes((Center, Center, Center), grid)
 bⁿ = @lift b[$n]
 cⁿ = @lift c[$n]
 
-hmζ = heatmap!(axζ, xζ, yζ, ζⁿ)
-hmb = heatmap!(axb, xc, yc, bⁿ)
-hmc = heatmap!(axc, xc, yc, cⁿ)
+hmζ = heatmap!(axζ, xζ, yζ, ζⁿ, colormap=:redblue, colorrange=(-maxζ, maxζ))
+hmb = heatmap!(axb, xc, yc, bⁿ, colormap=:thermal, colorrange=(minb, maxb))
+hmc = heatmap!(axc, xc, yc, cⁿ, colormap=:deep, colorrange=(0, 0.1))
 
 Colorbar(fig[2, 1], hmζ, vertical=false, flipaxis=true, label="Vertical vorticity (s⁻¹)")
 Colorbar(fig[2, 2], hmb, vertical=false, flipaxis=true, label="Buoyancy (m s⁻²)")
