@@ -25,11 +25,9 @@ grid = ImmersedBoundaryGrid(grid, GridFittedBottom(bump))
 Δx = grid.Lx / grid.Nx
 κh = Δx^4 / 12hours
 
-diffusive_closure = ScalarDiffusivity(ν = 1e-2, κ = 1e-2,
-                                      isotropy = Vertical(),
-                                      time_discretization = VerticallyImplicit())
+diffusive_closure = VerticalScalarDiffusivity(VerticallyImplicitTimeDiscretization(), ν = 1e-2, κ = 1e-2)
 
-horizontal_closure = ScalarBiharmonicDiffusivity(ν = κh, κ = κh, isotropy = Horizontal())
+horizontal_closure = HorizontalScalarBiharmonicDiffusivity(ν = κh, κ = κh)
 
 model = HydrostaticFreeSurfaceModel(grid = grid,
                                     coriolis = BetaPlane(latitude = -45),
